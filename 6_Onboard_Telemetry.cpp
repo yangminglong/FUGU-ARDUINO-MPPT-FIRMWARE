@@ -1,3 +1,7 @@
+#include "6_Onboard_Telemetry.h"
+
+#include "defines.h"
+
 void Onboard_Telemetry(){    
 
   /////////////////////// USB SERIAL DATA TELEMETRY ////////////////////////   

@@ -72,14 +72,25 @@
 // unused ESP32 core through Arduino. Yes it does multicore processes simultaneously!              // 
 //=================================================================================================//
 
+#include "defines.h"
+#include "2_Read_Sensors.h"
+#include "3_Device_Protection.h"
+#include "4_Charging_Algorithm.h"
+#include "5_System_Processes.h"
+#include "6_Onboard_Telemetry.h"
+#include "8_LCD_Menu.h"
+
+
 //================= CORE0: SETUP (DUAL CORE MODE) =====================//
-void coreTwo(void * pvParameters){
- setupWiFi();                                              //TAB#7 - WiFi Initialization
-//================= CORE0: LOOP (DUAL CORE MODE) ======================//
-  while(1){
-    Wireless_Telemetry();                                   //TAB#7 - Wireless telemetry (WiFi & Bluetooth)
+// void coreTwo(void * pvParameters){
+//  setupWiFi();                                              //TAB#7 - WiFi Initialization
+// //================= CORE0: LOOP (DUAL CORE MODE) ======================//
+//   while(1){
+//     Wireless_Telemetry();                                   //TAB#7 - Wireless telemetry (WiFi & Bluetooth)
     
-}}
+// }
+// }
+
 //================== CORE1: SETUP (DUAL CORE MODE) ====================//
 void setup() { 
   
@@ -107,17 +118,17 @@ void setup() {
   pwmMaxLimited = (PWM_MaxDC*pwmMax)/100.000;                //Get maximum PWM Duty Cycle (pwm limiting protection)
   
   //ADC INITIALIZATION
-  ADC_SetGain();                                             //Sets ADC Gain & Range
-  ads.begin();                                               //Initialize ADC
+  // ADC_SetGain();                                             //Sets ADC Gain & Range
+  // ads.begin();                                               //Initialize ADC
 
   //GPIO INITIALIZATION                          
   buck_Disable();
 
-  //ENABLE DUAL CORE MULTITASKING
-  xTaskCreatePinnedToCore(coreTwo,"coreTwo",10000,NULL,0,&Core2,0);
+  // //ENABLE DUAL CORE MULTITASKING
+  // xTaskCreatePinnedToCore(coreTwo,"coreTwo",10000,NULL,0,&Core2,0);
   
   //INITIALIZE AND LIOAD FLASH MEMORY DATA
-  EEPROM.begin(512);
+  // EEPROM.begin(512);
   Serial.println("> FLASH MEMORY: STORAGE INITIALIZED");  //Startup message 
   initializeFlashAutoload();                              //Load stored settings from flash memory       
   Serial.println("> FLASH MEMORY: SAVED DATA LOADED");    //Startup message 

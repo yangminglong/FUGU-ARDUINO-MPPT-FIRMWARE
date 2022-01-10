@@ -1,21 +1,20 @@
+#include "2_Read_Sensors.h"
+
 #include <arduino.h>
 #include "defines.h"
+
+
 adc_attenuation_t attenuation = ADC_11db;
 void ADC_SetGain() {
 
   analogSetAttenuation(attenuation);
 }
 
-void resetVariables(){
-  secondsElapsed = 0;
-  energySavings  = 0; 
-  daysRunning    = 0; 
-  timeOn         = 0; 
-}
+
 
 uint16_t analogAvgRead(uint8_t pin) {
 
-
+  return 0;
 }
 
 float analogRawToMilliVolts(uint16_t adc_reading)

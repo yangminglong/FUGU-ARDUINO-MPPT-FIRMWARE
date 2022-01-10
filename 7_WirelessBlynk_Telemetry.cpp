@@ -1,3 +1,9 @@
+
+#include "7_WirelessBlynk_Telemetry.h"
+#include <Arduino.h>
+
+#if defined(ENABLE_BLYNK)
+
 void setupWiFi(){
   if(enableWiFi==1){
     Blynk.begin(auth,ssid,pass);
@@ -32,7 +38,7 @@ void Wireless_Telemetry(){
     
     Blynk.virtualWrite(14,voltageBatteryMin);  //Minimum Battery Voltage (Read & Write)
     Blynk.virtualWrite(15,voltageBatteryMax);  //Maximum Battery Voltage (Read & Write)
-    Blynk.virtualWrite(16,currentCharging);    //Charging Current  (Read & Write)
+    Blynk.virtualWrite(16,currentChargingMax);    //Charging Current  (Read & Write)
     Blynk.virtualWrite(17,electricalPrice);    //Electrical Price  (Write)
   }
   ////////// WIFI TELEMETRY ////////// 
@@ -41,3 +47,5 @@ void Wireless_Telemetry(){
   }
   
 } 
+
+#endif
