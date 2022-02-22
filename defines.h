@@ -125,9 +125,9 @@ currentMidPoint         _INIT(2500.0),    //  CALIB PARAMETER - 电流传感器�
 currentSensV            _INIT(20.000),    //  CALIB PARAMETER - 电流传感器灵敏度 (mV/A)
 vOutSystemMax           _INIT(50.0000),   //  CALIB PARAMETER - 
 cOutSystemMax           _INIT(50.0000),   //  CALIB PARAMETER - 
-ntcResistance           _INIT(10000.0),  //  CALIB PARAMETER - NTC temp sensor's resistance. Change to 10000.00 if you are using a 10k NTC
-voltageDropout          _INIT(1.0000),    //  CALIB PARAMETER - Buck regulator's dropout voltage (DOV is present due to Max Duty Cycle Limit)
-voltageBatteryThresh    _INIT(1.5000),    //  CALIB PARAMETER - Power cuts-off when this voltage is reached (Output V)
+ntcResistance           _INIT(10000.0),   //  CALIB PARAMETER - NTC temp sensor's resistance. Change to 10000.00 if you are using a 10k NTC
+voltageDropout          _INIT(1.0000),    //  CALIB PARAMETER - 降压调节器的压降电压（由于最大占空比限制，存在DOV）
+voltageBatteryThresh    _INIT(1.5000),    //  CALIB PARAMETER - 达到此电压时，电源切断 (Output V)
 currentInAbsolute       _INIT(31.0000),   //  CALIB PARAMETER - Maximum Input Current The System Can Handle (A - Input)
 currentOutAbsolute      _INIT(50.0000),   //  CALIB PARAMETER - Maximum Output Current The System Can Handle (A - Input)
 PPWM_margin             _INIT(99.5000),   //  CALIB PARAMETER - Minimum Operating Duty Cycle for Predictive PWM (%)
@@ -176,7 +176,7 @@ inputSource           _INIT(0),          // SYSTEM PARAMETER - 0 = MPPT has no p
 avgStoreTS            _INIT(0),          // SYSTEM PARAMETER - Temperature Sensor uses non invasive averaging),this is used an accumulator for mean averaging
 temperature           _INIT(0),          // SYSTEM PARAMETER -
 sampleStoreTS         _INIT(0),          // SYSTEM PARAMETER - TS AVG nth Sample
-pwmMax                _INIT(0),          // SYSTEM PARAMETER -
+pwmMax                _INIT(0),          // SYSTEM PARAMETER - 在设置的PWM分辨率下的PWM最大数值，如4095
 pwmMaxLimited         _INIT(0),          // SYSTEM PARAMETER -
 PWM                   _INIT(0),          // SYSTEM PARAMETER -
 PPWM                  _INIT(0),          // SYSTEM PARAMETER -

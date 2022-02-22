@@ -15,9 +15,9 @@ void buck_Disable(){                                                            
   digitalWrite(LED,LOW);
   PWM = 0;
 }   
-void predictivePWM(){                                                                //PREDICTIVE PWM ALGORITHM 
-  if(voltageInput<=0){PPWM=0;}                                                       //Prevents Indefinite Answer when voltageInput is zero
-  else{PPWM =(PPWM_margin*pwmMax*voltageOutput)/(100.00*voltageInput);}              //Compute for predictive PWM Floor and store in variable
+void predictivePWM(){                                                                // PREDICTIVE PWM ALGORITHM 
+  if(voltageInput<=0){PPWM=0;}                                                       // Prevents Indefinite Answer when voltageInput is zero
+  else{PPWM =(PPWM_margin*pwmMax*voltageOutput)/(100.00*voltageInput);}              // Compute for predictive PWM Floor and store in variable
   PPWM = constrain(PPWM,0,pwmMaxLimited);
 }   
 
@@ -27,7 +27,7 @@ void PWM_Modulation(){
     predictivePWM();                                                                 //Runs and computes for predictive pwm floor
     PWM = constrain(PWM,PPWM,pwmMaxLimited);                                         //CHARGER MODE PWM - limit floor to PPWM and ceiling to maximim allowable duty cycle)                                       
   } 
-  ledcWrite(pwmChannel,PWM);                                                         //Set PWM duty cycle and write to GPIO when buck is enabled
+  ledcWrite(pwmChannel, PWM);                                                        //设置PWM占空比，并在buck启用时写入GPIO
   buck_Enable();                                                                     //Turn on MPPT buck (IR2104)
 }
      
@@ -36,7 +36,7 @@ void Charging_Algorithm(){
   else{
     if(REC==1){                                                                      //IUV RECOVERY - (Only active for charging mode)
       REC=0;                                                                         //Reset IUV recovery boolean identifier 
-      buck_Disable();                                                                //Disable buck before PPWM initialization
+      buck_Disable();                                                                //关闭buck before PPWM initialization
       lcd.setCursor(0,0);lcd.print("POWER SOURCE    ");                              //Display LCD message
       lcd.setCursor(0,1);lcd.print("DETECTED        ");                              //Display LCD message 
       Serial.println("> Solar Panel Detected");                                      //Display serial message
@@ -51,7 +51,7 @@ void Charging_Algorithm(){
     else{                                                                            //NO ERROR PRESENT  - Continue power conversion              
       /////////////////////// CC-CV BUCK PSU ALGORITHM ////////////////////////////// 
       if(MPPT_Mode==0){                                                              //CC-CV PSU MODE
-        if(currentOutput>currentChargingMax)       {PWM--;}                             //Current Is Above → Decrease Duty Cycle
+        if(currentOutput>currentChargingMax)    {PWM--;}                             //Current Is Above → Decrease Duty Cycle
         else if(voltageOutput>voltageBatteryMax){PWM--;}                             //Voltage Is Above → Decrease Duty Cycle   
         else if(voltageOutput<voltageBatteryMax){PWM++;}                             //Increase duty cycle when output is below charging voltage (for CC-CV only mode)
         else{}                                                                       //Do nothing when set output voltage is reached 
@@ -59,7 +59,7 @@ void Charging_Algorithm(){
       }     
         /////////////////////// MPPT & CC-CV CHARGING ALGORITHM ///////////////////////  
       else{                                                                                                                                                         
-        if(currentOutput>currentChargingMax){PWM--;}                                      //Current Is Above → Decrease Duty Cycle
+        if(currentOutput>currentChargingMax){PWM--;}                                   //Current Is Above → Decrease Duty Cycle
         else if(voltageOutput>voltageBatteryMax){PWM--;}                               //Voltage Is Above → Decrease Duty Cycle   
         else{                                                                          //MPPT ALGORITHM
           if(powerInput>powerInputPrev && voltageInput>voltageInputPrev)     {PWM--;}  //  ↑P ↑V ; →MPP  //D--
