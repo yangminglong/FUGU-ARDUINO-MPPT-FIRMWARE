@@ -1,7 +1,3 @@
-#include "8_LCD_Menu.h"
-#include "defines.h"
-#include "5_System_Processes.h"
-
 void lcdBacklight_Wake(){
     lcd.setBacklight(HIGH);
     prevLCDBackLMillis = millis();
@@ -28,7 +24,6 @@ void lcdBacklight(){
     } 
   }  
 }
-
 void padding100(int padVar){
   if(padVar<10){lcd.print("  ");}
   else if(padVar<100){lcd.print(" ");}
@@ -155,8 +150,8 @@ void LCD_Menu(){
           while(digitalRead(buttonRight)==1||digitalRead(buttonLeft)==1){}
           if(MPPT_Mode==1){MPPT_Mode=0;}else{MPPT_Mode=1;}
         }
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){} MPPT_Mode = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
-        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){} saveSettings();setMenuPage=0;savedMessageLCD();}
+        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}MPPT_Mode = boolTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}
       }     
     }
 
@@ -278,26 +273,26 @@ void LCD_Menu(){
       lcd.setCursor(0,0);lcd.print("CHARGING CURRENT");
       if(setMenuPage==1){lcd.setCursor(0,1);lcd.print(" >");}
       else{lcd.setCursor(0,1);lcd.print("= ");}
-      lcd.setCursor(2,1);lcd.print(currentChargingMax,2);lcd.print("A");  
+      lcd.setCursor(2,1);lcd.print(currentCharging,2);lcd.print("A");  
       lcd.print("                ");  
 
       //SET MENU - FLOATTYPE
-      if(setMenuPage==0){floatTemp = currentChargingMax;}
+      if(setMenuPage==0){floatTemp = currentCharging;}
       else{
-        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}currentChargingMax = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
+        if(digitalRead(buttonBack)==1){while(digitalRead(buttonBack)==1){}currentCharging = floatTemp;cancelledMessageLCD();setMenuPage=0;} 
         if(digitalRead(buttonSelect)==1){while(digitalRead(buttonSelect)==1){}saveSettings();setMenuPage=0;savedMessageLCD();}     
         currentMenuSetMillis = millis();
         if(digitalRead(buttonRight)==1){                                                  //Right button press (increments setting values)
           while(digitalRead(buttonRight)==1){
             if(millis()-currentMenuSetMillis>longPressTime){                              //Long Press     
-              currentChargingMax += 1.00;                                                    //Increment by 1
-              currentChargingMax = constrain(currentChargingMax,0.0,cOutSystemMax);             //Limit settings values to a range
-              lcd.setCursor(2,1);lcd.print(currentChargingMax,2);delay(longPressInterval);   //Display settings data                               
+              currentCharging += 1.00;                                                    //Increment by 1
+              currentCharging = constrain(currentCharging,0.0,cOutSystemMax);             //Limit settings values to a range
+              lcd.setCursor(2,1);lcd.print(currentCharging,2);delay(longPressInterval);   //Display settings data                               
             }
             else{                                                                         //Short Press  
-              currentChargingMax += 0.01;                                                    //Increment by 0.01
-              currentChargingMax = constrain(currentChargingMax,0.0,cOutSystemMax);             //Limit settings values to a range
-              lcd.setCursor(2,1);lcd.print(currentChargingMax,2);delay(shortPressInterval);  //Display settings data                            
+              currentCharging += 0.01;                                                    //Increment by 0.01
+              currentCharging = constrain(currentCharging,0.0,cOutSystemMax);             //Limit settings values to a range
+              lcd.setCursor(2,1);lcd.print(currentCharging,2);delay(shortPressInterval);  //Display settings data                            
             }  
             lcd.print("A   ");                                                            //Display unit
           } 
@@ -305,14 +300,14 @@ void LCD_Menu(){
         else if(digitalRead(buttonLeft)==1){                                              //Left button press (decrements setting values)
           while(digitalRead(buttonLeft)==1){
             if(millis()-currentMenuSetMillis>longPressTime){                              //Long Press     
-              currentChargingMax -= 1.00;                                                    //Increment by 1
-              currentChargingMax = constrain(currentChargingMax,0.0,cOutSystemMax);             //Limit settings values to a range
-              lcd.setCursor(2,1);lcd.print(currentChargingMax,2);delay(longPressInterval);   //Display settings data                               
+              currentCharging -= 1.00;                                                    //Increment by 1
+              currentCharging = constrain(currentCharging,0.0,cOutSystemMax);             //Limit settings values to a range
+              lcd.setCursor(2,1);lcd.print(currentCharging,2);delay(longPressInterval);   //Display settings data                               
             }
             else{                                                                         //Short Press  
-              currentChargingMax -= 0.01;                                                    //Increment by 0.01
-              currentChargingMax =  constrain(currentChargingMax,0.0,cOutSystemMax);            //Limit settings values to a range
-              lcd.setCursor(2,1);lcd.print(currentChargingMax,2);delay(shortPressInterval);  //Display settings data                                      
+              currentCharging -= 0.01;                                                    //Increment by 0.01
+              currentCharging =  constrain(currentCharging,0.0,cOutSystemMax);            //Limit settings values to a range
+              lcd.setCursor(2,1);lcd.print(currentCharging,2);delay(shortPressInterval);  //Display settings data                                      
             } 
             lcd.print("A   ");                                                            //Display unit
           } 
