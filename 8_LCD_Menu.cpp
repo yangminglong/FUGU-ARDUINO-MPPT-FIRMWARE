@@ -553,3 +553,644 @@ void LCD_Menu(){
     }    
   }
 }
+
+
+#include "LCD_Menu.h"
+#include <functional>
+#include "defines.h"
+#include <U8g2lib.h>
+
+
+extern U8G2_ST7565_LM6059_F_4W_HW_SPI u8g2; 		// Adafruit ST7565 GLCD
+
+  bool nextTrigger;
+  bool prevTrigger;
+  bool enterTrigger;
+
+  float curStep_MinBatV = 0.1;
+  float curStep_MaxBatV = 0.1;
+  float curStep_MaxBatI = 0.1;
+
+  int screenWidth  = 128;
+  int screenHeight = 64;
+  int lineHeight = 12;
+  int screenMarginY = 3;
+
+  bool isFactory = false;
+
+
+  uint8_t curTableIndex=1;
+
+  struct KeyTable
+  {
+    uint8_t  current; // 当前页面
+    uint8_t  prev;      // 向上翻索引号
+    uint8_t  next;    // 向下翻索引号
+    uint8_t  enter;   // 确认索引号
+    void (*operation)(); // 当前函数
+  } ;
+
+
+
+// 获取配置页面指定行的文字Y轴坐标
+int getLinePos(int line);
+
+void goSleep();
+
+String ftoString(float data, int n, int j = 1);
+
+void showState();
+
+void showSetting_page1();
+void showSetting_page1_Item(int nItem, bool isEdit = false);
+void showSetting_page2_Item(int nItem, bool isEdit = false);
+
+void showMenuItem0();
+void showMenuItem1();
+void showMenuItem2();
+void showMenuItem3();
+void showMenuItem4();
+void showMenuItem5();
+void showMenuItemFactory();
+
+void settingItemStepNext(std::function<void()> doNext);
+void settingItemStepPrev(std::function<void()> doPrev);
+void settingItemClick(std::function<void()> doClick);
+
+void showSettingItem0();
+void settingItem0_step_r1();
+void settingItem0_step_10();
+void voltageBatteryMinNext();
+void voltageBatteryMinPrev();
+void settingItem0_step_r1_next();
+void settingItem0_step_r1_prev();
+void settingItem0_step_10_next();
+void settingItem0_step_10_prev();
+
+void showSettingItem1();
+void settingItem1_step_r1();
+void settingItem1_step_10();
+void voltageBatteryMaxNext();
+void voltageBatteryMaxPrev();
+void settingItem1_step_r1_next();
+void settingItem1_step_r1_prev();
+void settingItem1_step_10_next();
+void settingItem1_step_10_prev();
+
+void showSettingItem2();
+void settingItem2_step_r1();
+void settingItem2_step_10();
+void currentChargingMaxNext();
+void currentChargingMaxPrev();
+void settingItem2_step_r1_next();
+void settingItem2_step_r1_prev();
+void settingItem2_step_10_next();
+void settingItem2_step_10_prev();
+
+void settingItem3_switch();
+void settingItem4_switch();
+void settingItem5_switch();
+
+void doFactory();
+void showMenuItemFactory_ignore();
+void showMenuItemFactory_accept();
+
+
+
+  KeyTable KeyTableValues[53]  = {
+    {0, 1, 1, 1, (*goSleep)},   //第一层，休眠，按任意键进入下一页
+
+    {1, 20, 5, 5, (*showState)},   //第二层，状态显示，上下切换详细状态与突出状态，按下进入配置菜单
+    {2, 1, 5, 5, (*showState)},   //第二层，状态显示，上下切换详细状态与突出状态，按下进入配置菜单
+
+    {3, 1,  1, 1, nullptr },   // 
+    {4, 1,  1, 1, nullptr },   // 
+
+    { 5,  1,  6, 21, (*showMenuItem0)},   // 配置菜单项：涓流电压 
+    { 6,  5,  7, 27, (*showMenuItem1)},   // 配置菜单项：过冲电压	
+    { 7,  6,  8, 33, (*showMenuItem2)},   // 配置菜单项：最大电流	
+    { 8,  7,  9, 39, (*showMenuItem3)},   // 配置菜单项：网络开关
+    { 9,  8, 10, 40, (*showMenuItem4)},   // 配置菜单项：充电算法
+    {10,  9, 20, 41, (*showMenuItem5)},   // 配置菜单项：背光开关
+
+    {11, 1,  1, 1, nullptr},   //  
+    {12, 1,  1, 1, nullptr},   //  
+    {13, 1,  1, 1, nullptr },   // 
+    {14, 1,  1, 1, nullptr },   // 
+    {15, 1,  1, 1, nullptr },   // 
+    {16, 1,  1, 1, nullptr },   // 
+    {17, 1,  1, 1, nullptr },   // 
+    {18, 1,  1, 1, nullptr },   // 
+    {19, 1,  1, 1, nullptr },   // 
+    {20, 10, 1, 51, (*showMenuItemFactory)},   // 配置菜单项：出厂设置
+
+    {21, 23, 24, 22, (*settingItem0_step_r1)     },   // 配置调整：涓流电压 步进0.1	
+    {22, 25, 26,  5, (*settingItem0_step_10)     },   // 配置调整：涓流电压 步进1
+    {23, 23, 24, 22, (*settingItem0_step_r1_prev)},   // 配置调整：涓流电压 上一步 步进0.1
+    {24, 23, 24, 22, (*settingItem0_step_r1_next)},   // 配置调整：涓流电压 下一步 步进0.1
+    {25, 25, 26,  5, (*settingItem0_step_10_prev)},   // 配置调整：涓流电压 上一步 步进1
+    {26, 25, 26,  5, (*settingItem0_step_10_next)},   // 配置调整：涓流电压 下一步 步进1
+    
+    {27, 29, 30, 28, (*settingItem1_step_r1)     },   // 配置调整：过冲电压 步进0.1	
+    {28, 31, 32,  6, (*settingItem1_step_10)     },   // 配置调整：过冲电压 步进1
+    {29, 29, 30, 28, (*settingItem1_step_r1_prev)},   // 配置调整：过冲电压 上一步 步进0.1
+    {30, 29, 30, 28, (*settingItem1_step_r1_next)},   // 配置调整：过冲电压 下一步 步进0.1
+    {31, 31, 32,  6, (*settingItem1_step_10_prev)},   // 配置调整：过冲电压 上一步 步进1
+    {32, 31, 32,  6, (*settingItem1_step_10_next)},   // 配置调整：过冲电压 下一步 步进1
+    
+    {33, 35, 36, 34, (*settingItem2_step_r1)     },   // 配置调整：最大电流 步进0.1	
+    {34, 37, 38,  7, (*settingItem2_step_10)     },   // 配置调整：最大电流 步进1
+    {35, 35, 36, 34, (*settingItem2_step_r1_prev)},   // 配置调整：最大电流 上一步 步进0.1
+    {36, 35, 36, 34, (*settingItem2_step_r1_next)},   // 配置调整：最大电流 下一步 步进0.1
+    {37, 37, 38,  7, (*settingItem2_step_10_prev)},   // 配置调整：最大电流 上一步 步进1
+    {38, 37, 38,  7, (*settingItem2_step_10_next)},   // 配置调整：最大电流 下一步 步进1
+
+    {39, 39, 39, 8, (*settingItem3_switch)},   // 配置调整：切换网络开关
+
+    {40, 40, 40, 9, (*settingItem4_switch)},   // 配置调整：切换充电算法
+
+    {41, 41, 41, 10, (*settingItem5_switch)},   // 配置调整：切换背光开关
+
+    {42, 1, 1, 1, nullptr},   // 
+    {43, 1, 1, 1, nullptr},   // 
+    {44, 1, 1, 1, nullptr},   // 
+    {45, 1, 1, 1, nullptr},   // 
+    {46, 1, 1, 1, nullptr},   // 
+    {47, 1, 1, 1, nullptr},   // 
+    {48, 1, 1, 1, nullptr},   // 
+    {49, 1, 1, 1, nullptr},   // 
+    {50, 1, 1, 1, nullptr},   // 
+
+    {51, 52, 52, 20, (*showMenuItemFactory_ignore)},   // 配置调整：出厂设置 取消
+    {52, 51, 51, 20, (*showMenuItemFactory_accept)},   // 配置调整：出厂设置 确认 
+                  
+  };
+
+
+void processKey(KeyType key) 
+{
+  switch(key)
+  {
+    case KeyPrev:  // 前一个
+      prevTrigger = true;
+      curTableIndex = KeyTableValues[curTableIndex].prev;
+      break;
+    case KeyNext: // 下一个
+      nextTrigger = true;
+      curTableIndex = KeyTableValues[curTableIndex].next;
+      break;
+    case KeyEnter: // 进入
+      enterTrigger = true;
+      curTableIndex = KeyTableValues[curTableIndex].enter;
+      break;
+    default: 
+      break;
+  }
+
+  if (key != KeyNone || curTableIndex == 1)
+    KeyTableValues[curTableIndex].operation();
+}
+
+
+  // 获取配置页面指定行的文字Y轴坐标
+  int getLinePos(int line) {
+    return screenMarginY  +12*line;
+  }
+
+  void goSleep()
+  {
+    backlightSleepMode = true;
+  }
+
+  String ftoString(float data, int n, int j ) 
+  {
+    char dataStr[16];
+    dtostrf(data, n, j, dataStr);
+    return dataStr;
+  }
+
+  void initU8g2() {
+    // 设置字体：中文，12像素
+    u8g2.setFont(u8g2_font_wqy12_t_gb2312);
+    // 设置字体坐标系0点在左上角
+    u8g2.setFontPosTop();
+    // 文字高度
+    lineHeight = u8g2.getHeight();
+  }
+
+  void showState()
+  {
+    backlightSleepMode = false;
+
+    String str;
+
+    u8g2.clearBuffer();
+
+    u8g2.setFont(u8g2_font_unifont_t_symbols);
+    u8g2.setFontPosTop();
+    u8g2.drawUTF8(0, getLinePos(0), "☀");
+
+    
+    u8g2.setFont(u8g2_font_wqy12_t_gb2312);  // use chinese2 for all the glyphs of "你好世界"
+    u8g2.setFontPosTop();
+    // 第一行 版本、  温度、 Solar状态、BAT状态、网络状态
+    str =  String(temperature) + "℃ " + ""+ String(daysRunning)  + "D ";
+    u8g2.setCursor(36, getLinePos(0));
+    u8g2.print(str.c_str());
+
+
+    // powerOutput     = voltageInput*currentInput*efficiencyRate;
+    float powerInput      = voltageInput*currentInput;
+    float powerOutput     = voltageOutput*currentOutput;
+    float efficiencyRate     = powerOutput*100/powerInput;
+// 第二行 输入 电压 电流 
+    str = "输入:" + ftoString(voltageInput, 5) + "伏 " + ftoString(currentInput, 4)  + "安" ;
+    u8g2.setCursor(1, getLinePos(1));
+    u8g2.print(str.c_str());
+
+    // 第三行 输出 电压 电流 
+    str = "输出:" + ftoString(voltageOutput, 5) + "伏 " + ftoString(currentOutput, 4)  + "安" ;
+    u8g2.setCursor(1, getLinePos(2));
+    u8g2.print(str.c_str());
+
+    // 第四行 功率
+    str = "功率:" + ftoString(powerOutput, 6) + "瓦 " + ftoString(efficiencyRate, 4) + "%";
+    u8g2.setCursor(1, getLinePos(3));
+    u8g2.print(str.c_str());
+
+    // 第五行 积累kwh
+    u8g2.setCursor(1, getLinePos(4)); 
+    str = "收集:" + ftoString(energySavings, 6) + "度 "  + electricalPrice + "元" ;
+    u8g2.print(str.c_str());  
+
+    u8g2.sendBuffer();
+  }
+
+  void showSetting_page1() {
+    u8g2.setCursor(2, getLinePos(0));
+    u8g2.print("涓流电压: " + ftoString(voltageBatteryMin, 4) + String("V "));
+    u8g2.setCursor(2, getLinePos(1));
+    u8g2.print("过冲电压: " + ftoString(voltageBatteryMax, 4) + String("V "));
+    u8g2.setCursor(2, getLinePos(2));
+    u8g2.print("最大电流: " + ftoString(currentChargingMax, 4) + String("A "));
+    u8g2.setCursor(2, getLinePos(3));
+    u8g2.print("网络开关: " + String(enableWiFi ? "开" : "关"));
+    u8g2.setCursor(2, getLinePos(4));
+    u8g2.print("算法切换: "+ String(MPPT_Mode ? "MPPT跟踪" : "PWM降压"));
+
+
+    u8g2.setCursor(127-10, getLinePos(4));
+    u8g2.print("↓");
+  }
+
+  void showSetting_page2() {
+    u8g2.setCursor(2, getLinePos(0));
+    u8g2.print("背光开关: " + String(enableLCDBacklight ? "开" : "关"));
+    u8g2.setCursor(2, getLinePos(1));
+    u8g2.print("恢复出厂设置");
+
+    u8g2.setCursor(127-10, getLinePos(0));
+    u8g2.print("↑");
+  }
+
+  void showSetting_page1_Item(int nItem, bool isEdit)
+  {
+    if (!prevTrigger && !nextTrigger && !enterTrigger) {
+      return;
+    }
+    prevTrigger = false;
+    nextTrigger = false;
+    enterTrigger = false;
+
+    backlightSleepMode = false;
+
+    u8g2.setFont(u8g2_font_wqy12_t_gb2312);  // use chinese2 for all the glyphs of "你好世界"
+    u8g2.setFontPosTop();
+
+    u8g2.clearBuffer();
+    //显示选中框, 灰色背景
+    u8g2.setDrawColor(64);
+    if (isEdit) {
+      int width = 54;
+      u8g2.drawFrame( width, getLinePos(nItem)-2, screenWidth - width, lineHeight+1);
+    } else {
+      u8g2.drawFrame( 0, getLinePos(nItem)-2, screenWidth, lineHeight+1);
+    }
+
+    if (isEdit && nItem >=0 && nItem <= 2) {
+      u8g2.setCursor(127-18-1, getLinePos(nItem));
+      u8g2.print( ftoString(nItem == 0 ? curStep_MinBatV : nItem == 1 ? curStep_MaxBatV : curStep_MaxBatI , 3) );
+    } 
+    
+    showSetting_page1();
+
+    u8g2.sendBuffer();
+  }
+
+  void showSetting_page2_Item(int nItem, bool isEdit) 
+  {
+    if (!prevTrigger && !nextTrigger && !enterTrigger) {
+      return;
+    }
+    prevTrigger = false;
+    nextTrigger = false;
+    enterTrigger = false;
+
+    u8g2.setFontPosTop();
+    u8g2.setFont(u8g2_font_wqy12_t_gb2312);  // use chinese2 for all the glyphs of "你好世界"
+
+    u8g2.clearBuffer();
+    //显示选中框, 灰色背景
+    u8g2.setDrawColor(64);
+    if (isEdit) {
+      int width = nItem == 0 ? 54 : 74;
+      u8g2.drawFrame( width, getLinePos(nItem)-2, screenWidth - width, lineHeight+1);
+    } else {
+      u8g2.drawFrame( 0, getLinePos(nItem)-2, screenWidth, lineHeight+1);
+    }
+
+    showSetting_page2();
+
+    if (isEdit && nItem == 1) {
+      u8g2.setCursor(127-24 - 1, getLinePos(1));
+      u8g2.print( String(isFactory ? "确认" : "取消") );
+    } 
+
+    u8g2.sendBuffer();
+  }
+
+  void showMenuItem0() {
+    showSetting_page1_Item(0);
+  }
+  void showMenuItem1() {
+    showSetting_page1_Item(1);
+  }
+  void showMenuItem2() {
+    showSetting_page1_Item(2);
+  }
+  void showMenuItem3() {
+    showSetting_page1_Item(3);
+  }
+  void showMenuItem4() {
+    showSetting_page1_Item(4);
+  }
+
+  void showMenuItem5() {
+    showSetting_page2_Item(0);
+  }
+  void showMenuItemFactory() {
+    showSetting_page2_Item(1);
+
+    if (isFactory) {
+      isFactory = false;
+
+      doFactory();
+    }
+  }
+
+  void settingItemStepNext(std::function<void()> doNext)
+  {
+    if (nextTrigger) {
+      doNext();
+    }
+  }
+
+  void settingItemStepPrev(std::function<void()> doPrev)
+  {
+    if (prevTrigger) {
+      doPrev();
+    }
+  }
+
+  void settingItemClick(std::function<void()> doClick)
+  {
+    if (enterTrigger) {
+      doClick();
+    }
+  }
+
+  void settingItemSwitch(std::function<void()> doSwitch)
+  {
+    if (prevTrigger || nextTrigger) {
+      doSwitch();
+    }
+  }
+
+  void showSettingItem0()
+  {
+    // 显示背景
+    showSetting_page1_Item(0, true);
+  }
+
+
+  void settingItem0_step_r1()
+  {
+    curStep_MinBatV = 0.1;
+    showSettingItem0(); 
+  }
+
+  void settingItem0_step_10()
+  {
+    curStep_MinBatV = 1;
+    showSettingItem0(); 
+  }
+
+  void voltageBatteryMinPrev() {
+        voltageBatteryMin -= curStep_MinBatV;
+      // if (voltageBatteryMin > 0)
+  }
+
+  void voltageBatteryMinNext() {
+        voltageBatteryMin += curStep_MinBatV;
+      // if (voltageBatteryMin < voltageBatteryMax-1)
+  }
+
+  void settingItem0_step_r1_prev()
+  {
+    settingItemStepPrev(&voltageBatteryMinPrev);
+    showSettingItem0(); 
+  }
+
+  void settingItem0_step_r1_next()
+  {
+    settingItemStepNext(&voltageBatteryMinNext);
+    showSettingItem0(); 
+  }
+
+  void settingItem0_step_10_next()
+  {
+    settingItemStepNext(&voltageBatteryMinNext);
+    showSettingItem0(); 
+  }
+
+  void settingItem0_step_10_prev()
+  {
+    settingItemStepPrev(&voltageBatteryMinPrev);
+    showSettingItem0(); 
+  }
+
+
+  void showSettingItem1()
+  {
+    // 显示
+    showSetting_page1_Item(1, true);
+  }
+
+
+  void settingItem1_step_r1()
+  {
+    curStep_MaxBatV = 0.1;
+    showSettingItem1(); 
+  }
+
+  void settingItem1_step_10()
+  {
+    curStep_MaxBatV = 1;
+    showSettingItem1(); 
+  }
+
+  void voltageBatteryMaxPrev() {
+        voltageBatteryMax -= curStep_MaxBatV;
+      // if (voltageBatteryMax > 0)
+  }
+
+  void voltageBatteryMaxNext() {
+        voltageBatteryMax += curStep_MaxBatV;
+      // if (voltageBatteryMax < voltageBatteryMax-1)
+  }
+
+  void settingItem1_step_r1_prev()
+  {
+    settingItemStepPrev(&voltageBatteryMaxPrev);
+    showSettingItem1(); 
+  }
+
+  void settingItem1_step_r1_next()
+  {
+    settingItemStepNext(&voltageBatteryMaxNext);
+    showSettingItem1(); 
+  }
+
+  void settingItem1_step_10_prev()
+  {
+    settingItemStepPrev(&voltageBatteryMaxPrev);
+    showSettingItem1(); 
+  }
+
+  void settingItem1_step_10_next()
+  {
+    settingItemStepNext(&voltageBatteryMaxNext);
+    showSettingItem1(); 
+  }
+
+
+  void showSettingItem2()
+  {
+    // 显示
+    showSetting_page1_Item(2, true);
+  }
+
+
+  void settingItem2_step_r1()
+  {
+    curStep_MaxBatI = 0.1;
+    showSettingItem2(); 
+  }
+
+  void settingItem2_step_10()
+  {
+    curStep_MaxBatI = 1;
+    showSettingItem2(); 
+  }
+
+  void currentChargingMaxPrev() {
+      currentChargingMax -= curStep_MaxBatI;
+      // if (currentChargingMax < 0)
+      //   curStep_MaxBatI = 0;
+  }
+
+  void currentChargingMaxNext() {
+      currentChargingMax += curStep_MaxBatI;
+      // if (currentChargingMax > currentChargingMaxAbs)
+      //   currentChargingMax = currentChargingMaxAbs;
+
+  }
+
+  void settingItem2_step_r1_next()
+  {
+    settingItemStepNext(&currentChargingMaxNext);
+    showSettingItem2(); 
+  }
+
+  void settingItem2_step_r1_prev()
+  {
+    settingItemStepPrev(&currentChargingMaxPrev);
+    showSettingItem2(); 
+  }
+
+  void settingItem2_step_10_next()
+  {
+    settingItemStepNext(&currentChargingMaxNext);
+    showSettingItem2(); 
+  }
+
+  void settingItem2_step_10_prev()
+  {
+    settingItemStepPrev(&currentChargingMaxPrev);
+    showSettingItem2(); 
+  }
+
+  void settingItem3_switch() 
+  {
+    settingItemSwitch([](){
+      enableWiFi = !enableWiFi;
+    });
+
+    // 显示
+    showSetting_page1_Item(3, true);
+
+  }
+
+
+  void settingItem4_switch() 
+  {
+    settingItemSwitch([](){
+      MPPT_Mode = !MPPT_Mode;
+    });
+
+    // 显示
+    showSetting_page1_Item(4, true);
+
+  }
+
+  void settingItem5_switch() 
+  {
+    settingItemSwitch([](){
+      enableLCDBacklight = !enableLCDBacklight;
+    });
+
+    // 显示
+    showSetting_page2_Item(0, true);
+  }
+
+
+  void showMenuItemFactory_ignore() 
+  {
+    // 显示
+    isFactory = false;
+    showSetting_page2_Item(1, true);
+  }
+
+  void doFactory() {
+
+  }
+
+  void showMenuItemFactory_accept() 
+  {
+    isFactory = true;
+    // // 如果确认则执行出厂设置
+    // settingItemClick(&doFactory);
+
+    // 显示
+    showSetting_page2_Item(1, true);
+  }
